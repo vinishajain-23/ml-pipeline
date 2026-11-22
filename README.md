@@ -12,7 +12,7 @@ A telecom company loses revenue every time a customer cancels. If we can flag cu
 * Target: `Churn` (Yes / No). About 27% of customers churned.
 * 19 features: account info (`tenure`, `Contract`, `PaymentMethod`, `MonthlyCharges`, `TotalCharges`, ...), services (`InternetService`, `TechSupport`, `StreamingTV`, ...) and demographics (`gender`, `SeniorCitizen`, `Partner`, `Dependents`). Most of them are categorical.
 
-Saved as `data/telco\\\_churn.csv`.
+Saved as `data/telco_churn.csv`.
 
 **Dropped columns**
 
@@ -31,7 +31,7 @@ git clone <this repo>
 cd ml-pipeline
 uv sync
 
-# Part 2: run both workflows, save the plots and model.joblib (takes \\\~2 minutes)
+# Part 2: run both workflows, save the plots and model.joblib (takes ~2 minutes)
 uv run discovery.py
 
 # Part 3: start the API, then open http://127.0.0.1:8000/docs
@@ -40,9 +40,9 @@ uv run fastapi dev main.py
 
 ## Part 2: Comparing the workflows
 
-!\[PyCaret comparison table](images/pycaret\_terminal.png)
+![PyCaret comparison table](images/pycaret_terminal.png)
 
-!\[Confusion matrix for the best model](images/pycaret\_confusion\_matrix.png)
+![Confusion matrix for the best model](images/pycaret_confusion_matrix.png)
 
 (In the confusion matrix, 0 = No churn and 1 = Churn. PyCaret label-encodes the target.)
 
@@ -67,13 +67,13 @@ weighted avg     0.8011    0.8088    0.8033      2113
 
 **Why the scores differ.** PyCaret reported accuracy of 0.8024 and F1 of 0.7966 for Logistic Regression. My classification report shows accuracy of 0.8088 and weighted F1 of 0.8033. PyCaret's numbers are averages across 10 cross-validation folds on the training data, while mine come from one held-out test set, so they won't match exactly. The preprocessing also differs a little (PyCaret uses its own imputation and encoding). One more thing I noticed: PyCaret's Recall column is identical to Accuracy, so it's a weighted average across both classes. The recall that matters here, recall on churners, is only 0.56.
 
-**Which metric matters.** Recall on the "Yes" class. A missed churner is a lost customer and all their future revenue. A false alarm only costs a retention offer to someone who was staying anyway. Right now the model misses 44% of churners, so the next step would be using `class\\\_weight="balanced"` or lowering the decision threshold to catch more of them, at the cost of some precision.
+**Which metric matters.** Recall on the "Yes" class. A missed churner is a lost customer and all their future revenue. A false alarm only costs a retention offer to someone who was staying anyway. Right now the model misses 44% of churners, so the next step would be using `class_weight="balanced"` or lowering the decision threshold to catch more of them, at the cost of some precision.
 
 ## Part 3: Serving the model
 
 `main.py` loads `model.joblib` once at startup (in FastAPI's `lifespan` function), defines a Pydantic `Customer` class with one field per feature, and exposes `POST /predict`. The categorical fields use `Literal` types, so /docs shows the allowed values and a typo like `"Cable"` gets rejected with a clear error instead of a bad prediction.
 
-!\[Successful prediction in /docs](images/docs\_prediction.png)
+![Successful prediction in /docs](images/docs_prediction.png)
 
 **Sample input**
 
@@ -104,7 +104,7 @@ weighted avg     0.8011    0.8088    0.8033      2113
 **Sample output**
 
 ```json
-{"churn": "Yes", "churn\\\_probability": 0.758}
+{"churn": "Yes", "churn_probability": 0.758}
 ```
 
 ## Explaining a prediction
@@ -120,9 +120,6 @@ This makes sense for the business. A customer on a two-year contract would have 
 
 ## AI use
 
-**I had Claude write both scripts and the first draft of this README, since most of it is standard pipeline and FastAPI boilerplate. I ran everything myself, took the screenshots, and updated the README with my own run times and scores, which came out slightly different from the draft (F1 0.7966 instead of 0.7965).**
+I had Claude write both scripts and the first draft of this README, since most of it is standard pipeline and FastAPI boilerplate. I ran everything myself, took the screenshots, and updated the README with my own run times and scores, which came out slightly different from the draft (F1 0.7966 instead of 0.7965).
 
-
-
-**One thing I had to check: PyCaret's Recall column matched Accuracy exactly, which meant it was a weighted average across both classes. Recall on actual churners was only 0.56. I also found that typing "Two Year" instead of "Two year" in /docs got rejected with a 422 error, which showed me why the input fields are restricted to exact values. Otherwise the model would quietly give a wrong prediction.**
-
+One thing I had to check: PyCaret's Recall column matched Accuracy exactly, which meant it was a weighted average across both classes. Recall on actual churners was only 0.56. I also found that typing "Two Year" instead of "Two year" in /docs got rejected with a 422 error, which showed me why the input fields are restricted to exact values. Otherwise the model would quietly give a wrong prediction.
